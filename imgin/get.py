@@ -2,11 +2,11 @@ import sys
 from os import remove, write
 from threading import Thread
 
-#from gevent import sleep
 from time import sleep
 import requests
 import bs4
 
+from .useragents import get_random_user_agent
 from .config import IMAGE_CACHE, SINGLE_IMAGE_DELETE_AFTER_SECS
 
 def delete_file(path):
@@ -23,6 +23,7 @@ def error(msg):
     sys.stderr.flush()
 
 def get(url: str, write_dir: str, delete=True):
+    ua = get_random_user_agent()
     orig_url = url
     if not url.startswith('https://imgur.com/'):
         url = 'https://imgur.com/' + url
@@ -38,7 +39,7 @@ def get(url: str, write_dir: str, delete=True):
         print('Getting img', url)
         url = 'https://i.imgur.com/' + url.rsplit('/', 1)[-1]
         with open(f'{write_dir}/{url[-11:]}', 'wb') as img:
-            img.write(requests.get(url).content)
+            img.write(requests.get(url, headers={'User-Agent': ua}).content)
         if delete:
             Thread(target=delete_file, args=[f"{write_dir}/{url[-11:]}"]).start()
         return None
@@ -49,7 +50,7 @@ def get(url: str, write_dir: str, delete=True):
         title = ''
         metas = []
         print('Detecting album/gallery images (contentUrl)', url)
-        soup = bs4.BeautifulSoup(requests.get(url).text, 'html.parser')
+        soup = bs4.BeautifulSoup(requests.get(url, headers={'User-Agent': ua}).text, 'html.parser')
         try:
             title = soup.select('meta[property="og:title"]')[0]['content']
             if title == "Imgur":
@@ -78,7 +79,7 @@ def get(url: str, write_dir: str, delete=True):
 
             print("Writing image", f"{write_dir}{found_url[-11:]}")
             with open(f"{write_dir}{found_url[-11:]}", "wb") as f:
-                f.write(requests.get(found_url).content)
+                f.write(requests.get(found_url, headers={'User-Agent': ua}).content)
 
             if delete:
                 Thread(target=delete_file, args=[f"{write_dir}{found_url[-11:]}"]).start()

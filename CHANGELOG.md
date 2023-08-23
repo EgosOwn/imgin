@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.5
+
+* Randomize user agent to circumvent ratelimit
+
 ## 0.0.4
 
 * Improved image scraping (Thanks https://austinhuang.me/)
